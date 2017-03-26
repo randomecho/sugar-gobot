@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/viper"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -37,7 +38,14 @@ func main() {
 		if err != nil {
 			fmt.Println("Error", err)
 		} else {
-			fmt.Println("Response", response)
+			if response.StatusCode == 200 {
+				bodyInBytes, _ := ioutil.ReadAll(response.Body)
+				var jsonBody map[string]interface{}
+				json.Unmarshal(bodyInBytes, &jsonBody)
+				accessToken := jsonBody["access_token"]
+
+				fmt.Println("access_token received")
+			}
 		}
 	}
 }
