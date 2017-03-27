@@ -21,6 +21,7 @@ func main() {
 		site_url := viper.GetString("site_url")
 		username := viper.GetString("username")
 		password := viper.GetString("password")
+		var jsonBody map[string]interface{}
 
 		fmt.Println("Connecting with", username, "to", site_url)
 
@@ -40,11 +41,35 @@ func main() {
 		} else {
 			if response.StatusCode == 200 {
 				bodyInBytes, _ := ioutil.ReadAll(response.Body)
-				var jsonBody map[string]interface{}
 				json.Unmarshal(bodyInBytes, &jsonBody)
 				accessToken := jsonBody["access_token"]
 
-				fmt.Println("access_token received")
+				fmt.Println("access_token received", accessToken)
+
+				record := map[string]string{
+					"name": "Gallsaberry",
+				}
+
+				recordJSON, _ := json.Marshal(record)
+				request, _ := http.NewRequest("POST", site_url+"Accounts", bytes.NewBuffer(recordJSON))
+				request.Header.Set("Content-Type", "application/json")
+				request.Header.Add("oauth-token", accessToken.(string))
+
+				client := &http.Client{}
+				response, err := client.Do(request)
+
+				if err != nil {
+					fmt.Println("Error on create", err)
+				} else {
+					if response.StatusCode == 200 {
+						bodyInBytes, _ := ioutil.ReadAll(response.Body)
+						json.Unmarshal(bodyInBytes, &jsonBody)
+
+						fmt.Println("Created Account with ID", jsonBody["id"])
+					}
+
+				}
+
 			}
 		}
 	}
