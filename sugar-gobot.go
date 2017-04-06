@@ -110,4 +110,27 @@ func main() {
 	json.Unmarshal(responseUpdateInBytes, &jsonBody)
 
 	fmt.Println("Updated Account with ID", jsonBody["id"])
+
+	requestDelete, _ := http.NewRequest("DELETE", urlUpdate, nil)
+	requestDelete.Header.Set("Content-Type", "application/json")
+	requestDelete.Header.Add("oauth-token", accessToken)
+	fmt.Println("Deleting via endpoint", urlUpdate)
+
+	clientDelete := &http.Client{}
+	responseDelete, err := clientDelete.Do(requestDelete)
+
+	if err != nil {
+		log.Fatal("Response fail:", responseDelete)
+	}
+
+	defer responseDelete.Body.Close()
+
+	if responseDelete.StatusCode != 200 {
+		log.Fatal("Delete fail:", responseDelete)
+	}
+
+	responseDeleteInBytes, _ := ioutil.ReadAll(responseDelete.Body)
+	json.Unmarshal(responseDeleteInBytes, &jsonBody)
+
+	fmt.Println("Deleted Account with ID", jsonBody["id"])
 }
