@@ -49,7 +49,7 @@ func main() {
 
 	bodyInBytes, _ := ioutil.ReadAll(responseOAuth.Body)
 	json.Unmarshal(bodyInBytes, &jsonBody)
-	accessToken := jsonBody["access_token"]
+	accessToken := jsonBody["access_token"].(string)
 
 	fmt.Println("access_token received", accessToken)
 
@@ -60,13 +60,13 @@ func main() {
 	recordJSON, _ := json.Marshal(record)
 	request, _ := http.NewRequest("POST", site_url+"Accounts", bytes.NewBuffer(recordJSON))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Add("oauth-token", accessToken.(string))
+	request.Header.Add("oauth-token", accessToken)
 
 	client := &http.Client{}
 	responseCreate, err := client.Do(request)
 
 	if err != nil {
-		log.Fatal(responseOAuth)
+		log.Fatal(responseCreate)
 	}
 
 	defer responseCreate.Body.Close()
@@ -77,6 +77,37 @@ func main() {
 
 	responseCreateInBytes, _ := ioutil.ReadAll(responseCreate.Body)
 	json.Unmarshal(responseCreateInBytes, &jsonBody)
+	recordID := jsonBody["id"].(string)
 
-	fmt.Println("Created Account with ID", jsonBody["id"])
+	fmt.Println("Created Account with ID", recordID)
+
+	recordUpdate := map[string]string{
+		"name": "Chog",
+	}
+
+	urlUpdate := site_url + "Accounts/" + recordID
+
+	recordUpdateJSON, _ := json.Marshal(recordUpdate)
+	requestUpdate, _ := http.NewRequest("PUT", urlUpdate, bytes.NewBuffer(recordUpdateJSON))
+	requestUpdate.Header.Set("Content-Type", "application/json")
+	requestUpdate.Header.Add("oauth-token", accessToken)
+	fmt.Println("Updating endpoint at", urlUpdate)
+
+	clientUpdate := &http.Client{}
+	responseUpdate, err := clientUpdate.Do(requestUpdate)
+
+	if err != nil {
+		log.Fatal("Response fail:", responseUpdate)
+	}
+
+	defer responseUpdate.Body.Close()
+
+	if responseUpdate.StatusCode != 200 {
+		log.Fatal("Update fail:", responseUpdate)
+	}
+
+	responseUpdateInBytes, _ := ioutil.ReadAll(responseUpdate.Body)
+	json.Unmarshal(responseUpdateInBytes, &jsonBody)
+
+	fmt.Println("Updated Account with ID", jsonBody["id"])
 }
