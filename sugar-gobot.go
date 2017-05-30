@@ -11,10 +11,11 @@ import (
 )
 
 var jsonBody map[string]interface{}
+var accessToken, siteURL string
 
-func createRecord(site_url string, module string, accessToken string, record map[string]string) string {
+func createRecord(module string, record map[string]string) string {
 	recordJSON, _ := json.Marshal(record)
-	request, _ := http.NewRequest("POST", site_url+module, bytes.NewBuffer(recordJSON))
+	request, _ := http.NewRequest("POST", siteURL+module, bytes.NewBuffer(recordJSON))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Add("oauth-token", accessToken)
 
@@ -40,9 +41,9 @@ func createRecord(site_url string, module string, accessToken string, record map
 	return recordID
 }
 
-func updateRecord(site_url string, module string, recordID string, accessToken string, record map[string]string) string {
+func updateRecord(module string, recordID string, record map[string]string) string {
 	recordJSON, _ := json.Marshal(record)
-	request, _ := http.NewRequest("PUT", site_url+module+"/"+recordID, bytes.NewBuffer(recordJSON))
+	request, _ := http.NewRequest("PUT", siteURL+module+"/"+recordID, bytes.NewBuffer(recordJSON))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Add("oauth-token", accessToken)
 
@@ -68,8 +69,8 @@ func updateRecord(site_url string, module string, recordID string, accessToken s
 	return recordID
 }
 
-func deleteRecord(site_url, module, recordID, accessToken string) bool {
-	request, _ := http.NewRequest("DELETE", site_url+module+"/"+recordID, nil)
+func deleteRecord(module, recordID string) bool {
+	request, _ := http.NewRequest("DELETE", siteURL+module+"/"+recordID, nil)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Add("oauth-token", accessToken)
 
@@ -103,11 +104,11 @@ func main() {
 		log.Fatal("Could not read config/app file")
 	}
 
-	site_url := viper.GetString("site_url")
+	siteURL = viper.GetString("site_url")
 	username := viper.GetString("username")
 	password := viper.GetString("password")
 
-	fmt.Println("Connecting with", username, "to", site_url)
+	fmt.Println("Connecting with", username, "to", siteURL)
 
 	creds := map[string]string{
 		"username":      username,
@@ -118,7 +119,7 @@ func main() {
 		"platform":      "api",
 	}
 	byteCreds, _ := json.Marshal(creds)
-	responseOAuth, err := http.Post(site_url+"oauth2/token", "application/json", bytes.NewBuffer(byteCreds))
+	responseOAuth, err := http.Post(siteURL+"oauth2/token", "application/json", bytes.NewBuffer(byteCreds))
 
 	if err != nil {
 		log.Fatal(err)
@@ -132,7 +133,7 @@ func main() {
 
 	bodyInBytes, _ := ioutil.ReadAll(responseOAuth.Body)
 	json.Unmarshal(bodyInBytes, &jsonBody)
-	accessToken := jsonBody["access_token"].(string)
+	accessToken = jsonBody["access_token"].(string)
 
 	fmt.Println("access_token received", accessToken)
 
@@ -140,13 +141,13 @@ func main() {
 		"name": "Gallsaberry",
 	}
 
-	recordID := createRecord(site_url, "Accounts", accessToken, recordData)
+	recordID := createRecord("Accounts", recordData)
 
 	recordUpdate := map[string]string{
 		"name": "Chog",
 	}
 
-	updateRecord(site_url, "Accounts", recordID, accessToken, recordUpdate)
+	updateRecord("Accounts", recordID, recordUpdate)
 
-	deleteRecord(site_url, "Accounts", recordID, accessToken)
+	deleteRecord("Accounts", recordID)
 }
