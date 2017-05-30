@@ -35,7 +35,7 @@ func createRecord(site_url string, module string, accessToken string, record map
 	json.Unmarshal(responseInBytes, &jsonBody)
 	recordID := jsonBody["id"].(string)
 
-	log.Fatal("Created ", module, " record with ID: ", recordID)
+	log.Println("Create", module, "record with ID:", recordID)
 
 	return recordID
 }
