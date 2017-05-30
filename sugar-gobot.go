@@ -40,6 +40,34 @@ func createRecord(site_url string, module string, accessToken string, record map
 	return recordID
 }
 
+func updateRecord(site_url string, module string, recordID string, accessToken string, record map[string]string) string {
+	recordJSON, _ := json.Marshal(record)
+	request, _ := http.NewRequest("PUT", site_url+module+"/"+recordID, bytes.NewBuffer(recordJSON))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Add("oauth-token", accessToken)
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		log.Fatal("Response fail:", response)
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		log.Fatal("Update fail:", response)
+	}
+
+	responseInBytes, _ := ioutil.ReadAll(response.Body)
+	json.Unmarshal(responseInBytes, &jsonBody)
+	recordID = jsonBody["id"].(string)
+
+	log.Println("Update", module, "record with ID:", recordID)
+
+	return recordID
+}
+
 func main() {
 	viper.SetConfigName("app")
 	viper.AddConfigPath("config")
@@ -92,31 +120,7 @@ func main() {
 		"name": "Chog",
 	}
 
-	urlUpdate := site_url + "Accounts/" + recordID
-
-	recordUpdateJSON, _ := json.Marshal(recordUpdate)
-	requestUpdate, _ := http.NewRequest("PUT", urlUpdate, bytes.NewBuffer(recordUpdateJSON))
-	requestUpdate.Header.Set("Content-Type", "application/json")
-	requestUpdate.Header.Add("oauth-token", accessToken)
-	fmt.Println("Updating endpoint at", urlUpdate)
-
-	clientUpdate := &http.Client{}
-	responseUpdate, err := clientUpdate.Do(requestUpdate)
-
-	if err != nil {
-		log.Fatal("Response fail:", responseUpdate)
-	}
-
-	defer responseUpdate.Body.Close()
-
-	if responseUpdate.StatusCode != 200 {
-		log.Fatal("Update fail:", responseUpdate)
-	}
-
-	responseUpdateInBytes, _ := ioutil.ReadAll(responseUpdate.Body)
-	json.Unmarshal(responseUpdateInBytes, &jsonBody)
-
-	fmt.Println("Updated Account with ID", jsonBody["id"])
+	updateRecord(site_url, "Accounts", recordID, accessToken, recordUpdate)
 
 	requestDelete, _ := http.NewRequest("DELETE", urlUpdate, nil)
 	requestDelete.Header.Set("Content-Type", "application/json")
