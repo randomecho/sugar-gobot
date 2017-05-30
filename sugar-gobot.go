@@ -68,6 +68,32 @@ func updateRecord(site_url string, module string, recordID string, accessToken s
 	return recordID
 }
 
+func deleteRecord(site_url, module, recordID, accessToken string) bool {
+	request, _ := http.NewRequest("DELETE", site_url+module+"/"+recordID, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Add("oauth-token", accessToken)
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		log.Fatal("Response fail:", response)
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		log.Fatal("Delete fail:", response)
+	}
+
+	responseInBytes, _ := ioutil.ReadAll(response.Body)
+	json.Unmarshal(responseInBytes, &jsonBody)
+
+	log.Println("Delete", module, "record with ID:", recordID)
+
+	return true
+}
+
 func main() {
 	viper.SetConfigName("app")
 	viper.AddConfigPath("config")
@@ -122,26 +148,5 @@ func main() {
 
 	updateRecord(site_url, "Accounts", recordID, accessToken, recordUpdate)
 
-	requestDelete, _ := http.NewRequest("DELETE", urlUpdate, nil)
-	requestDelete.Header.Set("Content-Type", "application/json")
-	requestDelete.Header.Add("oauth-token", accessToken)
-	fmt.Println("Deleting via endpoint", urlUpdate)
-
-	clientDelete := &http.Client{}
-	responseDelete, err := clientDelete.Do(requestDelete)
-
-	if err != nil {
-		log.Fatal("Response fail:", responseDelete)
-	}
-
-	defer responseDelete.Body.Close()
-
-	if responseDelete.StatusCode != 200 {
-		log.Fatal("Delete fail:", responseDelete)
-	}
-
-	responseDeleteInBytes, _ := ioutil.ReadAll(responseDelete.Body)
-	json.Unmarshal(responseDeleteInBytes, &jsonBody)
-
-	fmt.Println("Deleted Account with ID", jsonBody["id"])
+	deleteRecord(site_url, "Accounts", recordID, accessToken)
 }
