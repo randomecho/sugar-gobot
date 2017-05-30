@@ -10,6 +10,36 @@ import (
 	"net/http"
 )
 
+var jsonBody map[string]interface{}
+
+func createRecord(site_url string, module string, accessToken string, record map[string]string) string {
+	recordJSON, _ := json.Marshal(record)
+	request, _ := http.NewRequest("POST", site_url+module, bytes.NewBuffer(recordJSON))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Add("oauth-token", accessToken)
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		log.Fatal(response)
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		log.Fatal(response)
+	}
+
+	responseInBytes, _ := ioutil.ReadAll(response.Body)
+	json.Unmarshal(responseInBytes, &jsonBody)
+	recordID := jsonBody["id"].(string)
+
+	log.Fatal("Created ", module, " record with ID: ", recordID)
+
+	return recordID
+}
+
 func main() {
 	viper.SetConfigName("app")
 	viper.AddConfigPath("config")
@@ -22,7 +52,6 @@ func main() {
 	site_url := viper.GetString("site_url")
 	username := viper.GetString("username")
 	password := viper.GetString("password")
-	var jsonBody map[string]interface{}
 
 	fmt.Println("Connecting with", username, "to", site_url)
 
@@ -53,33 +82,11 @@ func main() {
 
 	fmt.Println("access_token received", accessToken)
 
-	record := map[string]string{
+	recordData := map[string]string{
 		"name": "Gallsaberry",
 	}
 
-	recordJSON, _ := json.Marshal(record)
-	request, _ := http.NewRequest("POST", site_url+"Accounts", bytes.NewBuffer(recordJSON))
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Add("oauth-token", accessToken)
-
-	client := &http.Client{}
-	responseCreate, err := client.Do(request)
-
-	if err != nil {
-		log.Fatal(responseCreate)
-	}
-
-	defer responseCreate.Body.Close()
-
-	if responseCreate.StatusCode != 200 {
-		log.Fatal(responseCreate)
-	}
-
-	responseCreateInBytes, _ := ioutil.ReadAll(responseCreate.Body)
-	json.Unmarshal(responseCreateInBytes, &jsonBody)
-	recordID := jsonBody["id"].(string)
-
-	fmt.Println("Created Account with ID", recordID)
+	recordID := createRecord(site_url, "Accounts", accessToken, recordData)
 
 	recordUpdate := map[string]string{
 		"name": "Chog",
