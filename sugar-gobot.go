@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
@@ -108,7 +107,7 @@ func main() {
 	username := viper.GetString("username")
 	password := viper.GetString("password")
 
-	fmt.Println("Connecting with", username, "to", siteURL)
+	log.Println("Connecting", username, "to", siteURL)
 
 	creds := map[string]string{
 		"username":      username,
@@ -135,7 +134,7 @@ func main() {
 	json.Unmarshal(bodyInBytes, &jsonBody)
 	accessToken = jsonBody["access_token"].(string)
 
-	fmt.Println("access_token received", accessToken)
+	log.Println("access_token received", accessToken)
 
 	recordData := map[string]string{
 		"name": "Gallsaberry",
