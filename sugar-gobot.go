@@ -94,20 +94,8 @@ func deleteRecord(module, recordID string) bool {
 	return true
 }
 
-func main() {
-	viper.SetConfigName("app")
-	viper.AddConfigPath("config")
-	err := viper.ReadInConfig()
-
-	if err != nil {
-		log.Fatal("Could not read config/app file")
-	}
-
-	siteURL = viper.GetString("site_url")
-	username := viper.GetString("username")
-	password := viper.GetString("password")
-
-	log.Println("Connecting", username, "to", siteURL)
+func connect(siteURL, username, password string) {
+	log.Println("Connect", username, "to", siteURL)
 
 	creds := map[string]string{
 		"username":      username,
@@ -134,7 +122,23 @@ func main() {
 	json.Unmarshal(bodyInBytes, &jsonBody)
 	accessToken = jsonBody["access_token"].(string)
 
-	log.Println("access_token received", accessToken)
+	log.Println("Use access_token", accessToken)
+}
+
+func main() {
+	viper.SetConfigName("app")
+	viper.AddConfigPath("config")
+	err := viper.ReadInConfig()
+
+	if err != nil {
+		log.Fatal("Could not read config/app file")
+	}
+
+	siteURL = viper.GetString("site_url")
+	username := viper.GetString("username")
+	password := viper.GetString("password")
+
+	connect(siteURL, username, password)
 
 	recordData := map[string]string{
 		"name": "Gallsaberry",
