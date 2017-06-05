@@ -64,7 +64,7 @@ func getRecordByFields(module string, record map[string]string) string {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Add("oauth-token", accessToken)
 
-	log.Println("Lookup", module, "by /filter?"+filterBy.Encode())
+	log.Println("Search", module, "by /filter?"+filterBy.Encode())
 
 	client := &http.Client{}
 	response, err := client.Do(request)
@@ -76,15 +76,22 @@ func getRecordByFields(module string, record map[string]string) string {
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		log.Fatal("Lookup fail:", response)
+		log.Fatal("Search fail:", response)
 	}
 
 	responseInBytes, _ := ioutil.ReadAll(response.Body)
 	json.Unmarshal(responseInBytes, &result)
 
-	log.Println("Found", module, "record with ID:", result.Records[0].Id)
+	if len(result.Records) == 0 {
+		log.Println("No", module, "record found matching search criteria")
 
-	return result.Records[0].Id
+		return "0"
+	} else {
+
+		log.Println("Found", module, "record with ID:", result.Records[0].Id)
+
+		return result.Records[0].Id
+	}
 }
 
 func updateRecord(module string, recordID string, record map[string]string) string {
