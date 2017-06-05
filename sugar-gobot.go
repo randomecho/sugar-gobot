@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 var jsonBody map[string]interface{}
@@ -38,6 +39,52 @@ func createRecord(module string, record map[string]string) string {
 	log.Println("Create", module, "record with ID:", recordID)
 
 	return recordID
+}
+
+type SugarRecord struct {
+	Id           string `json:"id"`
+	DateEntered  string `json:"date_entered"`
+	DateModified string `json:"date_modified"`
+}
+
+type SearchResult struct {
+	NextOffset int           `json:"next_offset"`
+	Records    []SugarRecord `json:"records"`
+}
+
+func getRecordByFields(module string, record map[string]string) string {
+	var result SearchResult
+	filterBy := url.Values{}
+
+	for k, v := range record {
+		filterBy.Add("filter[]["+k+"]", v)
+	}
+
+	request, _ := http.NewRequest("GET", siteURL+module+"/filter?"+filterBy.Encode(), nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Add("oauth-token", accessToken)
+
+	log.Println("Lookup", module, "by /filter?"+filterBy.Encode())
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		log.Fatal("Response fail:", response)
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		log.Fatal("Lookup fail:", response)
+	}
+
+	responseInBytes, _ := ioutil.ReadAll(response.Body)
+	json.Unmarshal(responseInBytes, &result)
+
+	log.Println("Found", module, "record with ID:", result.Records[0].Id)
+
+	return result.Records[0].Id
 }
 
 func updateRecord(module string, recordID string, record map[string]string) string {
@@ -145,6 +192,12 @@ func main() {
 	}
 
 	recordID := createRecord("Accounts", recordData)
+
+	recordLookup := map[string]string{
+		"name": "Poyo",
+	}
+
+	getRecordByFields("Accounts", recordLookup)
 
 	recordUpdate := map[string]string{
 		"name": "Chog",
