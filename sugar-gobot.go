@@ -13,6 +13,17 @@ import (
 var jsonBody map[string]interface{}
 var accessToken, siteURL string
 
+type SugarRecord struct {
+	Id           string `json:"id"`
+	DateEntered  string `json:"date_entered"`
+	DateModified string `json:"date_modified"`
+}
+
+type SearchResult struct {
+	NextOffset int           `json:"next_offset"`
+	Records    []SugarRecord `json:"records"`
+}
+
 func createRecord(module string, record map[string]string) string {
 	recordJSON, _ := json.Marshal(record)
 	request, _ := http.NewRequest("POST", siteURL+module, bytes.NewBuffer(recordJSON))
@@ -39,17 +50,6 @@ func createRecord(module string, record map[string]string) string {
 	log.Println("Create", module, "record with ID:", recordID)
 
 	return recordID
-}
-
-type SugarRecord struct {
-	Id           string `json:"id"`
-	DateEntered  string `json:"date_entered"`
-	DateModified string `json:"date_modified"`
-}
-
-type SearchResult struct {
-	NextOffset int           `json:"next_offset"`
-	Records    []SugarRecord `json:"records"`
 }
 
 func getRecordByFields(module string, record map[string]string) string {
