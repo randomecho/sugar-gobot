@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/Pallinder/go-randomdata"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 var jsonBody map[string]interface{}
@@ -193,6 +195,12 @@ func main() {
 	password := viper.GetString("password")
 
 	connect(siteURL, username, password)
+
+	accountData := map[string]string{
+		"name": strings.Title(randomdata.Adjective() + " " + randomdata.Noun() + " " + randomdata.City()),
+	}
+
+	createRecord("Accounts", accountData)
 
 	recordData := map[string]string{
 		"name": "Gallsaberry",
