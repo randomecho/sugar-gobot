@@ -202,11 +202,12 @@ func main() {
 
 	createRecord("Accounts", accountData)
 
-	recordData := map[string]string{
-		"name": "Gallsaberry",
+	contactData := map[string]string{
+		"first_name": randomdata.FirstName(randomdata.RandomGender),
+		"last_name": randomdata.LastName(),
 	}
 
-	recordID := createRecord("Accounts", recordData)
+	recordID := createRecord("Contacts", contactData)
 
 	recordLookup := map[string]string{
 		"name": "Poyo",
