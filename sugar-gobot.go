@@ -150,6 +150,32 @@ func deleteRecord(module, recordID string) bool {
 	return true
 }
 
+func linkRecords(module, recordID, relatedModule, relatedID string) bool {
+	request, _ := http.NewRequest("POST", siteURL+module+"/"+recordID+"/link/"+strings.ToLower(relatedModule)+"/"+relatedID, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Add("oauth-token", accessToken)
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		log.Fatal(response)
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		log.Fatal(response)
+	}
+
+	responseInBytes, _ := ioutil.ReadAll(response.Body)
+	json.Unmarshal(responseInBytes, &jsonBody)
+
+	log.Println("Linked", module, "ID:", recordID, "to", relatedModule, "ID:", relatedID)
+
+	return true
+}
+
 func connect(siteURL, username, password string) {
 	log.Println("Connect", username, "to", siteURL)
 
@@ -200,14 +226,16 @@ func main() {
 		"name": strings.Title(randomdata.Adjective() + " " + randomdata.Noun() + " " + randomdata.City()),
 	}
 
-	createRecord("Accounts", accountData)
+	accountID := createRecord("Accounts", accountData)
 
 	contactData := map[string]string{
 		"first_name": randomdata.FirstName(randomdata.RandomGender),
 		"last_name": randomdata.LastName(),
 	}
 
-	recordID := createRecord("Contacts", contactData)
+	contactID := createRecord("Contacts", contactData)
+
+	linkRecords("Accounts", accountID, "Contacts", contactID)
 
 	recordLookup := map[string]string{
 		"name": "Poyo",
