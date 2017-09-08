@@ -14,6 +14,7 @@ import (
 
 var jsonBody map[string]interface{}
 var accessToken, siteURL string
+var recordsToCreate = 10
 
 type SugarRecord struct {
 	Id           string `json:"id"`
@@ -222,20 +223,22 @@ func main() {
 
 	connect(siteURL, username, password)
 
-	accountData := map[string]string{
-		"name": strings.Title(randomdata.Adjective() + " " + randomdata.Noun() + " " + randomdata.City()),
+	for i := 0; i < recordsToCreate; i++ {
+		accountData := map[string]string{
+			"name": strings.Title(randomdata.Adjective() + " " + randomdata.Noun() + " " + randomdata.City()),
+		}
+
+		accountID := createRecord("Accounts", accountData)
+
+		contactData := map[string]string{
+			"first_name": randomdata.FirstName(randomdata.RandomGender),
+			"last_name": randomdata.LastName(),
+		}
+
+		contactID := createRecord("Contacts", contactData)
+
+		linkRecords("Accounts", accountID, "Contacts", contactID)
 	}
-
-	accountID := createRecord("Accounts", accountData)
-
-	contactData := map[string]string{
-		"first_name": randomdata.FirstName(randomdata.RandomGender),
-		"last_name": randomdata.LastName(),
-	}
-
-	contactID := createRecord("Contacts", contactData)
-
-	linkRecords("Accounts", accountID, "Contacts", contactID)
 
 	recordLookup := map[string]string{
 		"name": "Poyo",
