@@ -212,6 +212,8 @@ func main() {
 	viper.SetConfigName("app")
 	viper.AddConfigPath("config")
 	err := viper.ReadInConfig()
+	var createdAccounts []string
+	var createdContacts []string
 
 	if err != nil {
 		log.Fatal("Could not read config/app file")
@@ -229,6 +231,7 @@ func main() {
 		}
 
 		accountID := createRecord("Accounts", accountData)
+		createdAccounts = append(createdAccounts, accountID)
 
 		contactData := map[string]string{
 			"first_name": randomdata.FirstName(randomdata.RandomGender),
@@ -236,6 +239,7 @@ func main() {
 		}
 
 		contactID := createRecord("Contacts", contactData)
+		createdContacts = append(createdContacts, contactID)
 
 		linkRecords("Accounts", accountID, "Contacts", contactID)
 	}
