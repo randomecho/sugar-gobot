@@ -15,6 +15,7 @@ import (
 var jsonBody map[string]interface{}
 var accessToken, siteURL string
 var recordsToCreate = 10
+var purgeAfterCreation = true
 
 type SugarRecord struct {
 	Id           string `json:"id"`
@@ -25,6 +26,12 @@ type SugarRecord struct {
 type SearchResult struct {
 	NextOffset int           `json:"next_offset"`
 	Records    []SugarRecord `json:"records"`
+}
+
+type MassRecords struct {
+	Params struct {
+		UID []string `json:"uid"`
+	} `json:"massupdate_params"`
 }
 
 func createRecord(module string, record map[string]string) string {
@@ -151,6 +158,35 @@ func deleteRecord(module, recordID string) bool {
 	return true
 }
 
+func massDelete(module string, records []string) bool {
+	var massRecords MassRecords
+	massRecords.Params.UID = records
+	recordJSON, _ := json.Marshal(massRecords)
+	request, _ := http.NewRequest("DELETE", siteURL+module+"/MassUpdate", bytes.NewBuffer(recordJSON))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Add("oauth-token", accessToken)
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		log.Fatal("Response fail:", response)
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		log.Fatal("Delete fail:", response)
+	}
+
+	responseInBytes, _ := ioutil.ReadAll(response.Body)
+	json.Unmarshal(responseInBytes, &jsonBody)
+
+	log.Println("Delete", len(records), module, "records")
+
+	return true
+}
+
 func linkRecords(module, recordID, relatedModule, relatedID string) bool {
 	request, _ := http.NewRequest("POST", siteURL+module+"/"+recordID+"/link/"+strings.ToLower(relatedModule)+"/"+relatedID, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -246,8 +282,10 @@ func main() {
 		linkRecords("Accounts", accountID, "Contacts", contactID)
 	}
 
-	recordLookup := map[string]string{
-		"name": "Poyo",
+	if purgeAfterCreation {
+		log.Println("Time to purge newly created records")
+		massDelete("Accounts", createdAccounts)
+		massDelete("Contacts", createdContacts)
 	}
 
 	getRecordByFields("Accounts", recordLookup)
