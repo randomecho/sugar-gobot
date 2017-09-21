@@ -232,6 +232,7 @@ func main() {
 
 		accountID := createRecord("Accounts", accountData)
 		createdAccounts = append(createdAccounts, accountID)
+		log.Println("Accounts created:", len(createdAccounts))
 
 		contactData := map[string]string{
 			"first_name": randomdata.FirstName(randomdata.RandomGender),
@@ -240,6 +241,7 @@ func main() {
 
 		contactID := createRecord("Contacts", contactData)
 		createdContacts = append(createdContacts, contactID)
+		log.Println("Contacts created:", len(createdContacts))
 
 		linkRecords("Accounts", accountID, "Contacts", contactID)
 	}
