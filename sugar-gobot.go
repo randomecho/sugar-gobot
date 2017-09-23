@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/spf13/viper"
 	"io/ioutil"
@@ -14,8 +15,6 @@ import (
 
 var jsonBody map[string]interface{}
 var accessToken, siteURL string
-var recordsToCreate = 10
-var purgeAfterCreation = true
 
 type SugarRecord struct {
 	Id           string `json:"id"`
@@ -245,6 +244,10 @@ func connect(siteURL, username, password string) {
 }
 
 func main() {
+	recordsToCreate := flag.Int("num", 10, "Count of records to create on each run")
+	purgeAfterCreation := flag.Bool("delete", true, "Whether to delete the records after creation")
+	flag.Parse()
+
 	viper.SetConfigName("app")
 	viper.AddConfigPath("config")
 	err := viper.ReadInConfig()
@@ -261,7 +264,7 @@ func main() {
 
 	connect(siteURL, username, password)
 
-	for i := 0; i < recordsToCreate; i++ {
+	for i := 0; i < *recordsToCreate; i++ {
 		accountData := map[string]string{
 			"name": strings.Title(randomdata.Adjective() + " " + randomdata.Noun() + " " + randomdata.City()),
 		}
@@ -272,7 +275,7 @@ func main() {
 
 		contactData := map[string]string{
 			"first_name": randomdata.FirstName(randomdata.RandomGender),
-			"last_name": randomdata.LastName(),
+			"last_name":  randomdata.LastName(),
 		}
 
 		contactID := createRecord("Contacts", contactData)
@@ -282,7 +285,7 @@ func main() {
 		linkRecords("Accounts", accountID, "Contacts", contactID)
 	}
 
-	if purgeAfterCreation {
+	if *purgeAfterCreation {
 		log.Println("Time to purge newly created records")
 		massDelete("Accounts", createdAccounts)
 		massDelete("Contacts", createdContacts)
