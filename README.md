@@ -1,6 +1,7 @@
 # Sugar Go bot
 
-Connection class to Sugar CRM API.
+Tool to quickly create Account and Contact records in a Sugar instance
+via the REST API. Each Account is linked with a Contact.
 
 ## Usage
 
@@ -11,3 +12,8 @@ To create 10 records (20 in total of Accounts, Contacts) and delete them right a
 To create three records (six in total of Accounts, Contacts) and leave in the system:
 
     sugar-gobot -num=3
+
+
+### License
+
+[Released under the MIT license](/LICENSE).
