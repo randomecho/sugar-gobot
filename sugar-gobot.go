@@ -245,7 +245,7 @@ func connect(siteURL, username, password string) {
 
 func main() {
 	recordsToCreate := flag.Int("num", 10, "Count of records to create on each run")
-	purgeAfterCreation := flag.Bool("delete", true, "Whether to delete the records after creation")
+	purgeAfterCreation := flag.Bool("delete", false, "Whether to delete the records after creation")
 	flag.Parse()
 
 	viper.SetConfigName("app")
