@@ -9,23 +9,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
 var jsonBody map[string]interface{}
 var accessToken, siteURL string
-
-type SugarRecord struct {
-	Id           string `json:"id"`
-	DateEntered  string `json:"date_entered"`
-	DateModified string `json:"date_modified"`
-}
-
-type SearchResult struct {
-	NextOffset int           `json:"next_offset"`
-	Records    []SugarRecord `json:"records"`
-}
 
 type MassRecords struct {
 	Params struct {
@@ -59,102 +47,6 @@ func createRecord(module string, record map[string]string) string {
 	log.Println("Create", module, "record with ID:", recordID)
 
 	return recordID
-}
-
-func getRecordByFields(module string, record map[string]string) string {
-	var result SearchResult
-	filterBy := url.Values{}
-
-	for k, v := range record {
-		filterBy.Add("filter[]["+k+"]", v)
-	}
-
-	request, _ := http.NewRequest("GET", siteURL+module+"/filter?"+filterBy.Encode(), nil)
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Add("oauth-token", accessToken)
-
-	log.Println("Search", module, "by /filter?"+filterBy.Encode())
-
-	client := &http.Client{}
-	response, err := client.Do(request)
-
-	if err != nil {
-		log.Fatal("Response fail:", response)
-	}
-
-	defer response.Body.Close()
-
-	if response.StatusCode != 200 {
-		log.Fatal("Search fail:", response)
-	}
-
-	responseInBytes, _ := ioutil.ReadAll(response.Body)
-	json.Unmarshal(responseInBytes, &result)
-
-	if len(result.Records) == 0 {
-		log.Println("No", module, "record found matching search criteria")
-
-		return "0"
-	} else {
-
-		log.Println("Found", module, "record with ID:", result.Records[0].Id)
-
-		return result.Records[0].Id
-	}
-}
-
-func updateRecord(module string, recordID string, record map[string]string) string {
-	recordJSON, _ := json.Marshal(record)
-	request, _ := http.NewRequest("PUT", siteURL+module+"/"+recordID, bytes.NewBuffer(recordJSON))
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Add("oauth-token", accessToken)
-
-	client := &http.Client{}
-	response, err := client.Do(request)
-
-	if err != nil {
-		log.Fatal("Response fail:", response)
-	}
-
-	defer response.Body.Close()
-
-	if response.StatusCode != 200 {
-		log.Fatal("Update fail:", response)
-	}
-
-	responseInBytes, _ := ioutil.ReadAll(response.Body)
-	json.Unmarshal(responseInBytes, &jsonBody)
-	recordID = jsonBody["id"].(string)
-
-	log.Println("Update", module, "record with ID:", recordID)
-
-	return recordID
-}
-
-func deleteRecord(module, recordID string) bool {
-	request, _ := http.NewRequest("DELETE", siteURL+module+"/"+recordID, nil)
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Add("oauth-token", accessToken)
-
-	client := &http.Client{}
-	response, err := client.Do(request)
-
-	if err != nil {
-		log.Fatal("Response fail:", response)
-	}
-
-	defer response.Body.Close()
-
-	if response.StatusCode != 200 {
-		log.Fatal("Delete fail:", response)
-	}
-
-	responseInBytes, _ := ioutil.ReadAll(response.Body)
-	json.Unmarshal(responseInBytes, &jsonBody)
-
-	log.Println("Delete", module, "record with ID:", recordID)
-
-	return true
 }
 
 func massDelete(module string, records []string) bool {
@@ -290,14 +182,4 @@ func main() {
 		massDelete("Accounts", createdAccounts)
 		massDelete("Contacts", createdContacts)
 	}
-
-	getRecordByFields("Accounts", recordLookup)
-
-	recordUpdate := map[string]string{
-		"name": "Chog",
-	}
-
-	updateRecord("Accounts", recordID, recordUpdate)
-
-	deleteRecord("Accounts", recordID)
 }
